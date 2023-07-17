@@ -26,6 +26,15 @@ var (
 func main() {
 	leftMenuList.AddItem("Images", "", '1', nil).
 		AddItem("Containers", "", '2', nil).
+		AddItem("Volumes", "", '3', nil).
+		SetChangedFunc(func(i int, mainText string, secondaryText string, shortcut rune) {
+			if i == 0 {
+				handlerImage()
+			} else if i == 1 {
+				handlerContainer()
+			} else if i == 2 {
+			}
+		}).
 		SetBorder(true)
 
 	rightList.SetBorder(true)
@@ -50,16 +59,6 @@ func setInputCaptureOn() {
 			app.SetFocus(rightList)
 		} else if event.Key() == tcell.KeyLeft {
 			app.SetFocus(leftMenuList)
-		}
-
-		if app.GetFocus() == leftMenuList {
-			if event.Key() == tcell.KeyDown || event.Key() == tcell.KeyUp {
-				if leftMenuList.GetCurrentItem() == 0 {
-					handlerContainer()
-				} else {
-					handlerImage()
-				}
-			}
 		}
 		return event
 	})
