@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
 	"io"
 
@@ -33,6 +34,7 @@ func main() {
 			} else if i == 1 {
 				handlerContainer()
 			} else if i == 2 {
+				handlerVolume()
 			}
 		}).
 		SetBorder(true)
@@ -173,6 +175,19 @@ func handlerContainer() {
 			app.SetFocus(modal)
 			setInputCaptureOff()
 		})
+	}
+}
+
+func handlerVolume() {
+	rightList.Clear()
+	cli, err := client.NewClientWithOpts(client.FromEnv)
+	if err != nil {
+		panic(err)
+	}
+	volumes, _ := cli.VolumeList(context.Background(), volume.ListOptions{})
+	for _, v := range volumes.Volumes {
+		name := v.Name
+		rightList.AddItem(name, "", 'v', nil)
 	}
 }
 
