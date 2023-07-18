@@ -187,7 +187,9 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 }
 
 func handlerVolume() {
+	rootFlex.RemoveItem(modal)
 	rightList.Clear()
+	initModalInit()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
@@ -195,7 +197,27 @@ func handlerVolume() {
 	volumes, _ := cli.VolumeList(context.Background(), volume.ListOptions{})
 	for _, v := range volumes.Volumes {
 		name := v.Name
-		rightList.AddItem(name, "", 'v', nil)
+		rightList.AddItem(name, "", 'v', volumeItemSelected(name, cli))
+	}
+}
+
+func volumeItemSelected(volumeID string, cli *client.Client) func() {
+	return func() {
+		rootFlex.RemoveItem(rightFlex)
+		modal.SetText(volumeID).
+			AddButtons([]string{"remove"}).
+			SetDoneFunc(func(_ int, _ string) {
+				err := cli.VolumeRemove(context.Background(), volumeID, false)
+				if err != nil {
+					errorTextview.SetText(err.Error())
+				}
+				rootFlex.AddItem(rightFlex, 0, 4, false)
+				setInputCaptureOn()
+				handlerVolume()
+			})
+		rootFlex.AddItem(modal, 0, 4, false)
+		app.SetFocus(modal)
+		setInputCaptureOff()
 	}
 }
 
