@@ -93,33 +93,37 @@ func handlerImage() {
 	for _, image := range images {
 		iID := image.ID
 		item := fmt.Sprintf("%s", image.RepoTags[0])
-		rightList.AddItem(item, "", 'i', func() {
-			rootFlex.RemoveItem(rightFlex)
-			modal.SetText(iID).
-				AddButtons([]string{"run", "remove"}).
-				SetDoneFunc(func(_ int, buttonLabel string) {
-					if buttonLabel == "remove" {
-						_, err = cli.ImageRemove(ctx, iID, types.ImageRemoveOptions{})
-						if err != nil {
-							errorTextview.SetText(err.Error())
-						}
-					} else if buttonLabel == "run" {
-						resp, err := cli.ContainerCreate(ctx, &container.Config{Image: image.RepoTags[0]}, nil, nil, nil, "")
-						if err != nil {
-							errorTextview.SetText(err.Error())
-						}
-						cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{})
-					} else {
-						errorTextview.SetText("")
+		rightList.AddItem(item, "", 'i', imageItemSelected(iID, image.RepoTags[0], cli))
+	}
+}
+
+func imageItemSelected(imageID string, repoTag string, cli *client.Client) func() {
+	return func() {
+		rootFlex.RemoveItem(rightFlex)
+		modal.SetText(imageID).
+			AddButtons([]string{"run", "remove"}).
+			SetDoneFunc(func(_ int, buttonLabel string) {
+				if buttonLabel == "remove" {
+					_, err := cli.ImageRemove(context.Background(), imageID, types.ImageRemoveOptions{})
+					if err != nil {
+						errorTextview.SetText(err.Error())
 					}
-					setInputCaptureOn()
-					rootFlex.AddItem(rightFlex, 0, 4, false)
-					handlerImage()
-				})
-			rootFlex.AddItem(modal, 0, 4, false)
-			app.SetFocus(modal)
-			setInputCaptureOff()
-		})
+				} else if buttonLabel == "run" {
+					resp, err := cli.ContainerCreate(context.Background(), &container.Config{Image: repoTag}, nil, nil, nil, "")
+					if err != nil {
+						errorTextview.SetText(err.Error())
+					}
+					cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{})
+				} else {
+					errorTextview.SetText("")
+				}
+				setInputCaptureOn()
+				rootFlex.AddItem(rightFlex, 0, 4, false)
+				handlerImage()
+			})
+		rootFlex.AddItem(modal, 0, 4, false)
+		app.SetFocus(modal)
+		setInputCaptureOff()
 	}
 }
 
@@ -142,39 +146,43 @@ func handlerContainer() {
 	for _, c := range containers {
 		str := fmt.Sprintf("%s(%s) %s", c.Image, c.ID, c.Status)
 		cID := c.ID
-		rightList.AddItem(str, "", 'c', func() {
-			rootFlex.RemoveItem(rightFlex)
-			modal.SetText(cID + " Delete?").
-				AddButtons([]string{"remove", "stop", "logs"}).
-				SetDoneFunc(func(_ int, buttonLabel string) {
-					ctx := context.Background()
-					if buttonLabel == "remove" {
-						err := cli.ContainerRemove(ctx, cID, types.ContainerRemoveOptions{})
-						if err != nil {
-							errorTextview.SetText(err.Error())
-						}
-					} else if buttonLabel == "stop" {
-						err := cli.ContainerStop(ctx, cID, container.StopOptions{})
-						if err != nil {
-							errorTextview.SetText(err.Error())
-						}
-					} else if buttonLabel == "logs" {
-						reader, err := cli.ContainerLogs(ctx, cID, types.ContainerLogsOptions{ShowStdout: true, Details: true, ShowStderr: true})
-						if err != nil {
-							errorTextview.SetText(err.Error())
-						}
-						a, _ := io.ReadAll(reader)
-						errorTextview.SetText(string(a))
-					}
+		rightList.AddItem(str, "", 'c', containerItemSelected(cID, cli))
+	}
+}
 
-					rootFlex.AddItem(rightFlex, 0, 4, false)
-					setInputCaptureOn()
-					handlerContainer()
-				})
-			rootFlex.AddItem(modal, 0, 4, false)
-			app.SetFocus(modal)
-			setInputCaptureOff()
-		})
+func containerItemSelected(containerID string, cli *client.Client) func() {
+	return func() {
+		rootFlex.RemoveItem(rightFlex)
+		modal.SetText(containerID + " Delete?").
+			AddButtons([]string{"remove", "stop", "logs"}).
+			SetDoneFunc(func(_ int, buttonLabel string) {
+				ctx := context.Background()
+				if buttonLabel == "remove" {
+					err := cli.ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
+					if err != nil {
+						errorTextview.SetText(err.Error())
+					}
+				} else if buttonLabel == "stop" {
+					err := cli.ContainerStop(ctx, containerID, container.StopOptions{})
+					if err != nil {
+						errorTextview.SetText(err.Error())
+					}
+				} else if buttonLabel == "logs" {
+					reader, err := cli.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{ShowStdout: true, Details: true, ShowStderr: true})
+					if err != nil {
+						errorTextview.SetText(err.Error())
+					}
+					a, _ := io.ReadAll(reader)
+					errorTextview.SetText(string(a))
+				}
+
+				rootFlex.AddItem(rightFlex, 0, 4, false)
+				setInputCaptureOn()
+				handlerContainer()
+			})
+		rootFlex.AddItem(modal, 0, 4, false)
+		app.SetFocus(modal)
+		setInputCaptureOff()
 	}
 }
 
