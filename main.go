@@ -74,7 +74,6 @@ func setInputCaptureOff() {
 }
 
 func handlerImage() {
-	rootFlex.RemoveItem(modal)
 	// app.SetFocus(rightList)
 	rightList.Clear()
 	initModalInit()
@@ -119,6 +118,7 @@ func imageItemSelected(imageID string, repoTag string, cli *client.Client) func(
 				}
 				setInputCaptureOn()
 				rootFlex.AddItem(rightFlex, 0, 4, false)
+				rootFlex.RemoveItem(modal)
 				handlerImage()
 			})
 		rootFlex.AddItem(modal, 0, 4, false)
@@ -128,7 +128,6 @@ func imageItemSelected(imageID string, repoTag string, cli *client.Client) func(
 }
 
 func handlerContainer() {
-	rootFlex.RemoveItem(modal)
 	// app.SetFocus(rightList)
 	rightList.Clear()
 	initModalInit()
@@ -178,6 +177,7 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 
 				rootFlex.AddItem(rightFlex, 0, 4, false)
 				setInputCaptureOn()
+				rootFlex.RemoveItem(modal)
 				handlerContainer()
 			})
 		rootFlex.AddItem(modal, 0, 4, false)
@@ -187,7 +187,6 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 }
 
 func handlerVolume() {
-	rootFlex.RemoveItem(modal)
 	rightList.Clear()
 	initModalInit()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
@@ -213,6 +212,7 @@ func volumeItemSelected(volumeID string, cli *client.Client) func() {
 				}
 				rootFlex.AddItem(rightFlex, 0, 4, false)
 				setInputCaptureOn()
+				rootFlex.RemoveItem(modal)
 				handlerVolume()
 			})
 		rootFlex.AddItem(modal, 0, 4, false)
