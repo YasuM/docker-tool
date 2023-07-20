@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/docker/docker/client"
-	"io"
 
 	"github.com/gdamore/tcell/v2"
 
@@ -22,6 +23,7 @@ var (
 	rightList     *tview.List        = tview.NewList()
 	modal         *tview.Modal       = tview.NewModal()
 	errorTextview *tview.TextView    = tview.NewTextView()
+	logTextview   *tview.TextView    = tview.NewTextView()
 )
 
 func main() {
@@ -42,6 +44,8 @@ func main() {
 	rightList.SetBorder(true)
 	errorTextview.SetBorder(true)
 
+	logTextview.SetBorder(true)
+
 	rightFlex.SetDirection(tview.FlexRow).
 		AddItem(rightList, 0, 10, false).
 		AddItem(errorTextview, 0, 1, false)
@@ -53,6 +57,11 @@ func main() {
 	if err := app.SetRoot(rootFlex, true).SetFocus(leftMenuList).Run(); err != nil {
 		panic(err)
 	}
+}
+
+func initRightFlex() {
+	rootFlex.RemoveItem(rightFlex)
+	rootFlex.AddItem(rightFlex, 0, 4, false)
 }
 
 func setInputCaptureOn() {
@@ -77,6 +86,8 @@ func handlerImage() {
 	// app.SetFocus(rightList)
 	rightList.Clear()
 	initModalInit()
+	rootFlex.RemoveItem(logTextview)
+	initRightFlex()
 
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -161,24 +172,29 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 					if err != nil {
 						errorTextview.SetText(err.Error())
 					}
+					rootFlex.AddItem(rightFlex, 0, 4, false)
+					setInputCaptureOn()
+					handlerContainer()
 				} else if buttonLabel == "stop" {
 					err := cli.ContainerStop(ctx, containerID, container.StopOptions{})
 					if err != nil {
 						errorTextview.SetText(err.Error())
 					}
+					rootFlex.AddItem(rightFlex, 0, 4, false)
+					setInputCaptureOn()
+					handlerContainer()
 				} else if buttonLabel == "logs" {
 					reader, err := cli.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{ShowStdout: true, Details: true, ShowStderr: true})
 					if err != nil {
 						errorTextview.SetText(err.Error())
+					} else {
+						a, _ := io.ReadAll(reader)
+						logTextview.SetText(string(a))
+						rootFlex.AddItem(logTextview, 0, 4, false)
 					}
-					a, _ := io.ReadAll(reader)
-					errorTextview.SetText(string(a))
+					setInputCaptureOn()
 				}
-
-				rootFlex.AddItem(rightFlex, 0, 4, false)
-				setInputCaptureOn()
 				rootFlex.RemoveItem(modal)
-				handlerContainer()
 			})
 		rootFlex.AddItem(modal, 0, 4, false)
 		app.SetFocus(modal)
