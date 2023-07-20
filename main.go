@@ -102,8 +102,7 @@ func handlerImage() {
 
 	for _, image := range images {
 		iID := image.ID
-		item := fmt.Sprintf("%s", image.RepoTags[0])
-		rightList.AddItem(item, "", 'i', imageItemSelected(iID, image.RepoTags[0], cli))
+		rightList.AddItem(image.RepoTags[0], "", 'i', imageItemSelected(iID, image.RepoTags[0], cli))
 	}
 }
 
