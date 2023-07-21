@@ -1,4 +1,4 @@
-module docker-tool
+module github.com/YasuM/docker-tool
 
 go 1.20
 
