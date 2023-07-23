@@ -45,6 +45,11 @@ func main() {
 	errorTextview.SetBorder(true)
 
 	logTextview.SetBorder(true)
+	logTextview.SetDoneFunc(func(key tcell.Key) {
+		rootFlex.RemoveItem(logTextview).
+			AddItem(rightFlex, 0, 4, false)
+		initModalInit()
+	})
 
 	rightFlex.SetDirection(tview.FlexRow).
 		AddItem(rightList, 0, 10, false).
@@ -67,7 +72,11 @@ func initRightFlex() {
 func setInputCaptureOn() {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyRight {
-			app.SetFocus(rightList)
+			if rootFlex.GetItem(1) == logTextview {
+				app.SetFocus(logTextview)
+			} else {
+				app.SetFocus(rightList)
+			}
 			return nil
 		} else if event.Key() == tcell.KeyLeft {
 			app.SetFocus(leftMenuList)
