@@ -68,8 +68,10 @@ func setInputCaptureOn() {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyRight {
 			app.SetFocus(rightList)
+			return nil
 		} else if event.Key() == tcell.KeyLeft {
 			app.SetFocus(leftMenuList)
+			return nil
 		}
 		return event
 	})
@@ -172,7 +174,6 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 						errorTextview.SetText(err.Error())
 					}
 					rootFlex.AddItem(rightFlex, 0, 4, false)
-					setInputCaptureOn()
 					handlerContainer()
 				} else if buttonLabel == "stop" {
 					err := cli.ContainerStop(ctx, containerID, container.StopOptions{})
@@ -180,7 +181,6 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 						errorTextview.SetText(err.Error())
 					}
 					rootFlex.AddItem(rightFlex, 0, 4, false)
-					setInputCaptureOn()
 					handlerContainer()
 				} else if buttonLabel == "logs" {
 					reader, err := cli.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{ShowStdout: true, Details: true, ShowStderr: true})
@@ -191,9 +191,13 @@ func containerItemSelected(containerID string, cli *client.Client) func() {
 						logTextview.SetText(string(a))
 						rootFlex.AddItem(logTextview, 0, 4, false)
 					}
-					setInputCaptureOn()
+				} else {
+					rootFlex.AddItem(rightFlex, 0, 4, false)
+					handlerContainer()
 				}
+				setInputCaptureOn()
 				rootFlex.RemoveItem(modal)
+				app.SetFocus(rightList)
 			})
 		rootFlex.AddItem(modal, 0, 4, false)
 		app.SetFocus(modal)
